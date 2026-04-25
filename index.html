@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>RouteDelivery</title>
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif}
+:root{
+  --green:#1D9E75;--gl:#E1F5EE;--gd:#085041;
+  --amber:#BA7517;--al:#FAEEDA;--ad:#633806;
+  --coral:#D85A30;--cl:#FAECE7;--cd:#4A1B0C;
+  --gray:#888780;--gy:#F1EFE8;--gyd:#2C2C2A;
+  --bg:#fff;--bg2:#f4f3ef;--bd:rgba(44,44,42,.13);
+  --tx:#1a1a18;--tx2:#5F5E5A
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1c1c1a;--bg2:#252523;--bd:rgba(255,255,255,.1);--tx:#f0efeb;--tx2:#888780;
+  --gl:#04342C;--gd:#9FE1CB;--al:#412402;--ad:#FAC775;
+  --cl:#4A1B0C;--cd:#F5C4B3;--gy:#2C2C2A;--gyd:#D3D1C7
+}}
+
+.view{display:none;flex-direction:column;height:100dvh}
+.view.active{display:flex}
+
+/* topbar */
+.tb{background:var(--bg);border-bottom:.5px solid var(--bd);
+  padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));
+  display:flex;align-items:center;gap:12px;flex-shrink:0;z-index:10}
+.tb-back{background:none;border:none;cursor:pointer;color:var(--green);font-size:22px;padding:2px 6px}
+.tb-title{font-size:15px;font-weight:600;color:var(--tx);flex:1}
+.tb-sub{font-size:11px;color:var(--tx2);font-family:'Space Mono',monospace}
+
+/* home header */
+.hh{background:var(--bg);border-bottom:.5px solid var(--bd);flex-shrink:0;
+  padding:18px 16px 14px;padding-top:max(18px,env(safe-area-inset-top))}
+.hh-g{font-size:13px;color:var(--tx2)}
+.hh-t{font-size:22px;font-weight:600;color:var(--tx);margin:2px 0}
+.hh-d{font-size:11px;color:var(--tx2);font-family:'Space Mono',monospace}
+
+/* stats */
+.stats{display:flex;background:var(--bg);border-bottom:.5px solid var(--bd);flex-shrink:0}
+.stat{flex:1;padding:10px;text-align:center;border-right:.5px solid var(--bd)}
+.stat:last-child{border-right:none}
+.stat-n{font-size:20px;font-weight:700;font-family:'Space Mono',monospace;color:var(--tx)}
+.stat-l{font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+
+/* action row */
+.ar{display:flex;gap:8px;padding:10px 14px;background:var(--bg2);flex-shrink:0}
+.abtn{flex:1;padding:8px;border-radius:10px;border:.5px solid var(--bd);
+  background:var(--bg);font-size:12px;font-weight:500;color:var(--tx);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:4px}
+.ag{background:var(--gl);border-color:var(--green);color:var(--gd)}
+
+/* search bar */
+.srch{display:flex;align-items:center;gap:8px;padding:8px 12px;
+  background:var(--bg);border-bottom:.5px solid var(--bd);flex-shrink:0}
+.srch-ic{font-size:16px;color:var(--tx2);flex-shrink:0}
+.srch-in{flex:1;border:none;outline:none;font-size:14px;font-family:'DM Sans',sans-serif;background:transparent;color:var(--tx)}
+.srch-in::placeholder{color:var(--tx2)}
+.srch-cl{background:none;border:none;cursor:pointer;color:var(--tx2);font-size:18px;padding:0 2px;display:none}
+.srch-cl.vis{display:block}
+.srch-empty{text-align:center;padding:40px 20px;color:var(--tx2);font-size:14px}
+
+/* list */
+.ls{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2)}
+.sl{font-size:10px;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;padding:10px 14px 4px;font-family:'Space Mono',monospace}
+.dc{background:var(--bg);margin:0 10px 6px;border-radius:12px;border:.5px solid var(--bd);overflow:hidden;cursor:pointer;transition:transform .1s}
+.dc:active{transform:scale(.98)}
+.dc-m{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.sb{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;font-family:'Space Mono',monospace}
+.s-p{background:var(--gy);color:var(--gyd)}.s-d{background:var(--gl);color:var(--gd)}
+.s-f{background:var(--cl);color:var(--cd)}.s-c{background:var(--al);color:var(--ad)}
+.ci{flex:1;min-width:0}
+.cn{font-size:14px;font-weight:500;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ca{font-size:12px;color:var(--tx2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cm{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap}
+.pill{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500}
+.pi-p{background:var(--gy);color:var(--gray)}.pi-d{background:var(--gl);color:var(--gd)}
+.pi-f{background:var(--cl);color:var(--cd)}.pi-c{background:var(--al);color:var(--ad)}
+.ot{font-size:10px;color:var(--tx2);font-family:'Space Mono',monospace}
+.waqb{padding:12px 13px;background:none;border:none;cursor:pointer;display:flex;align-items:center;border-left:.5px solid var(--bd)}
+.waqb:active{background:var(--gl)}
+.wa-ic{width:22px;height:22px;fill:#25D366}
+.dc-note{padding:5px 14px 9px 56px;font-size:11px;color:var(--tx2);border-top:.5px solid var(--bd);background:var(--bg2)}
+
+/* fab */
+.fab{position:fixed;bottom:max(70px,calc(env(safe-area-inset-bottom)+62px));right:18px;
+  width:52px;height:52px;border-radius:50%;background:var(--green);color:#fff;border:none;
+  font-size:26px;cursor:pointer;box-shadow:0 4px 16px rgba(29,158,117,.4);
+  display:flex;align-items:center;justify-content:center;z-index:50}
+.fab:active{transform:scale(.93)}
+
+/* bottom nav */
+.bn{display:flex;background:var(--bg);border-top:.5px solid var(--bd);padding-bottom:max(0px,env(safe-area-inset-bottom));flex-shrink:0;z-index:20}
+.nb{flex:1;padding:10px 0 8px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.ni{font-size:20px}
+.nl{font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px}
+.nb.active .nl{color:var(--green);font-weight:600}
+
+/* MAP */
+.map-wrap{flex:1;position:relative;min-height:0}
+#lmap{width:100%;height:100%}
+
+/* floating search on map */
+.map-search-bar{position:absolute;top:10px;left:10px;right:10px;z-index:500;
+  display:flex;align-items:center;background:#fff;border-radius:12px;
+  box-shadow:0 2px 12px rgba(0,0,0,.22);overflow:visible}
+.map-search-ic{padding:0 10px 0 12px;font-size:17px;color:#888;flex-shrink:0}
+.map-search-in{flex:1;border:none;outline:none;font-size:14px;font-family:'DM Sans',sans-serif;padding:11px 4px;color:#222;background:transparent}
+.map-search-in::placeholder{color:#aaa}
+.map-search-cl{background:none;border:none;cursor:pointer;padding:0 12px;font-size:17px;color:#aaa;display:none}
+.map-search-cl.vis{display:block}
+
+/* Google Places autocomplete dropdown */
+.pac-container{z-index:9999!important;border-radius:0 0 12px 12px!important;
+  box-shadow:0 4px 16px rgba(0,0,0,.18)!important;
+  font-family:'DM Sans',sans-serif!important;border-top:none!important}
+
+/* Google Maps InfoWindow overrides */
+.gm-style .gm-style-iw-c{padding:0!important;border-radius:14px!important;box-shadow:0 4px 24px rgba(0,0,0,.22)!important}
+.gm-style .gm-style-iw-d{overflow:hidden!important;padding:0!important}
+.gm-ui-hover-effect{display:none!important}
+.gm-style .gm-style-iw-tc::after{background:#fff!important}
+
+/* map controls */
+.map-ctrl{position:absolute;right:10px;z-index:500;display:flex;flex-direction:column;gap:6px}
+.map-ctrl.top{top:62px}
+.mcbtn{background:#fff;border:none;border-radius:10px;width:40px;height:40px;font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.2);transition:background .15s}
+.mcbtn:active{background:#f0f0f0}
+.mcbtn.active-layer{background:#1D9E75;color:#fff}
+.map-zoom{position:absolute;right:10px;bottom:16px;z-index:500;display:flex;flex-direction:column;
+  background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.mzbtn{border:none;background:none;width:40px;height:40px;font-size:22px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:#444}
+.mzbtn:active{background:#f0f0f0}
+.mz-div{height:.5px;background:#ddd;margin:0 6px}
+
+/* route info bar */
+.map-routebar{position:absolute;bottom:16px;left:10px;right:60px;z-index:500;
+  background:#fff;border-radius:12px;padding:10px 14px;
+  box-shadow:0 2px 12px rgba(0,0,0,.18);display:none;
+  font-family:'DM Sans',sans-serif;align-items:center;gap:10px}
+.map-routebar.show{display:flex}
+.mrb-ic{font-size:22px;flex-shrink:0}
+.mrb-info{flex:1}
+.mrb-dist{font-size:14px;font-weight:600;color:#1D9E75}
+.mrb-time{font-size:12px;color:#888;margin-top:1px}
+.mrb-close{background:none;border:none;font-size:18px;color:#aaa;cursor:pointer;padding:0 2px}
+
+/* my location */
+@keyframes pulse{0%{transform:scale(1);opacity:1}70%{transform:scale(2.2);opacity:0}100%{transform:scale(2.2);opacity:0}}
+.my-loc-wrap{position:relative;width:18px;height:18px}
+.my-loc-dot{width:18px;height:18px;border-radius:50%;background:#185FA5;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);position:relative;z-index:2}
+.my-loc-ring{position:absolute;inset:0;border-radius:50%;background:#185FA5;opacity:.4;animation:pulse 2s ease-out infinite}
+
+/* popup */
+.mpop{padding:13px 15px;min-width:200px;font-family:'DM Sans',sans-serif}
+.mpop-n{font-size:15px;font-weight:600;color:#111;margin-bottom:2px}
+.mpop-a{font-size:12px;color:#666;margin-bottom:10px;line-height:1.4}
+.mpop-st{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;margin-bottom:10px;font-weight:500}
+.mpop-r{display:flex;gap:6px}
+.mpop-b{flex:1;padding:8px;border-radius:9px;border:.5px solid rgba(0,0,0,.12);font-size:12px;font-weight:500;cursor:pointer;background:#fff;color:#111;text-align:center}
+.mpop-g{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.mpop-nav{background:#4285F4;border-color:#3367d6;color:#fff}
+.mpop-w{background:#25D366;border-color:#1eb355;color:#fff}
+
+/* DETAIL */
+.dscroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.dh{background:var(--bg);padding:16px;border-bottom:.5px solid var(--bd);display:flex;align-items:center;gap:14px}
+.dav{width:50px;height:50px;border-radius:50%;background:var(--gl);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;color:var(--gd);flex-shrink:0}
+.dn{font-size:17px;font-weight:600;color:var(--tx)}
+.do{font-size:11px;color:var(--tx2);font-family:'Space Mono',monospace;margin-top:2px}
+.dsec{background:var(--bg);margin:8px 10px;border-radius:12px;border:.5px solid var(--bd);overflow:hidden}
+.dr{display:flex;padding:11px 14px;border-bottom:.5px solid var(--bd)}
+.dr:last-child{border-bottom:none}
+.drl{font-size:12px;color:var(--tx2);width:88px;flex-shrink:0;padding-top:1px}
+.drv{font-size:13px;color:var(--tx);font-weight:500;flex:1}
+.das{padding:8px 10px 80px;display:flex;flex-direction:column;gap:8px}
+.bb{width:100%;padding:14px;border-radius:12px;border:.5px solid var(--bd);font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--bg);color:var(--tx)}
+.bb:active{transform:scale(.98)}
+.bbg{background:var(--gl);border-color:var(--green);color:var(--gd)}
+.bbc{background:var(--cl);border-color:var(--coral);color:var(--cd)}
+.bbw{background:#25D366;border-color:#1eb355;color:#fff}
+
+/* ADD */
+.add-sc{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 12px 80px;background:var(--bg2)}
+.asec{background:var(--bg);border-radius:12px;border:.5px solid var(--bd);overflow:hidden;margin-bottom:10px}
+.asec-t{font-size:10px;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;padding:10px 14px 4px;font-family:'Space Mono',monospace}
+.af{padding:8px 14px 11px;border-bottom:.5px solid var(--bd)}
+.af:last-child{border-bottom:none}
+.af label{font-size:11px;color:var(--tx2);display:block;margin-bottom:3px}
+.af input,.af textarea{width:100%;font-size:15px;color:var(--tx);background:transparent;border:none;outline:none;font-family:'DM Sans',sans-serif}
+.af textarea{resize:none;height:58px}
+.asave{margin:0 12px;width:calc(100% - 24px);padding:15px;border-radius:12px;background:var(--green);color:#fff;border:none;font-size:15px;font-weight:600;cursor:pointer}
+.ahint{text-align:center;font-size:11px;color:var(--tx2);margin-top:8px}
+.btn-pick-map{display:block;width:calc(100% - 24px);margin:0 12px 8px;padding:12px;border:.5px dashed var(--bd);border-radius:12px;background:var(--bg);color:var(--tx2);font-size:13px;cursor:pointer;text-align:center}
+
+/* WA overlay */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;align-items:flex-end;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}
+.ov.open{display:flex}
+.was{background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-height:88vh;overflow-y:auto;animation:su .25s ease}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.wah{width:36px;height:4px;background:var(--bd);border-radius:2px;margin:10px auto 0}
+.wah2{background:#075E54;padding:13px 16px;display:flex;align-items:center;gap:12px;margin:12px 12px 0;border-radius:12px}
+.wah2-t{color:#fff;font-size:14px;font-weight:600}
+.wah2-s{color:rgba(255,255,255,.7);font-size:11px}
+.wab{padding:14px 12px}
+.war{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border-radius:10px;margin-bottom:14px}
+.wavar{width:36px;height:36px;border-radius:50%;background:var(--gl);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--gd);flex-shrink:0}
+.wan{font-size:14px;font-weight:500;color:var(--tx)}
+.waph{font-size:12px;color:var(--tx2);font-family:'Space Mono',monospace}
+.tl{font-size:11px;color:var(--tx2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;font-family:'Space Mono',monospace}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.tbt{padding:9px 10px;border:.5px solid var(--bd);border-radius:10px;font-size:12px;color:var(--tx2);cursor:pointer;background:var(--bg);text-align:left;line-height:1.35}
+.tbt.sel{border-color:var(--green);background:var(--gl);color:var(--gd)}
+.wata{width:100%;border:.5px solid var(--bd);border-radius:10px;padding:11px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);resize:none;height:95px;outline:none;margin-bottom:12px}
+.wata:focus{border-color:#25D366}
+.wafooter{display:flex;gap:8px;padding:0 0 14px}
+.wfc{flex:1;padding:13px;border-radius:10px;border:.5px solid var(--bd);background:var(--bg);color:var(--tx);font-size:14px;cursor:pointer}
+.wfs{flex:2;padding:13px;border-radius:10px;border:none;background:#25D366;color:#fff;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+
+.ph-wrap{display:flex;align-items:center;gap:6px}
+.ph-pre{font-size:15px;color:var(--tx2);white-space:nowrap;flex-shrink:0}
+
+/* toast */
+.toast{position:fixed;bottom:max(82px,calc(env(safe-area-inset-bottom)+68px));left:50%;transform:translateX(-50%) translateY(16px);background:#111;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:700;opacity:0;transition:all .28s;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Picker */
+.picker-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:800;align-items:flex-end;justify-content:center}
+.picker-ov.open{display:flex}
+.picker-sheet{background:var(--bg);border-radius:20px 20px 0 0;width:100%;height:80vh;display:flex;flex-direction:column}
+.picker-top{padding:14px 16px;border-bottom:.5px solid var(--bd);flex-shrink:0;display:flex;align-items:center;gap:10px}
+.picker-top-info{flex:1;min-width:0}
+.picker-addr-lbl{font-size:14px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.picker-sub{font-size:11px;color:var(--tx2);margin-top:2px}
+.picker-map-wrap{flex:1;position:relative}
+#picker-map{width:100%;height:100%}
+.picker-pin{position:absolute;top:50%;left:50%;transform:translate(-50%,-100%);font-size:36px;z-index:10;pointer-events:none;transition:transform .1s}
+.picker-pin.dragging{transform:translate(-50%,-130%)}
+.picker-shadow{position:absolute;top:50%;left:50%;width:10px;height:4px;background:rgba(0,0,0,.25);border-radius:50%;transform:translate(-50%,2px);z-index:9;pointer-events:none;transition:all .1s}
+.picker-shadow.dragging{width:6px;opacity:.4}
+.picker-footer{padding:12px 14px 14px;padding-bottom:max(14px,env(safe-area-inset-bottom));border-top:.5px solid var(--bd);display:flex;gap:8px;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="view active" id="view-home">
+  <div class="hh">
+    <div class="hh-g">Bom dia, entregador! 👋</div>
+    <div class="hh-t">Rota de Hoje</div>
+    <div class="hh-d" id="home-date"></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-n" id="s-total">0</div><div class="stat-l">Total</div></div>
+    <div class="stat"><div class="stat-n" id="s-done" style="color:var(--green)">0</div><div class="stat-l">Feitas</div></div>
+    <div class="stat"><div class="stat-n" id="s-pend" style="color:var(--amber)">0</div><div class="stat-l">Pendentes</div></div>
+    <div class="stat"><div class="stat-n" id="s-fail" style="color:var(--coral)">0</div><div class="stat-l">Falhas</div></div>
+  </div>
+  <div class="ar">
+    <button class="abtn ag" onclick="showView('view-map')">🗺 Ver mapa</button>
+    <button class="abtn" onclick="optimizeRoute()">⚡ Otimizar</button>
+  </div>
+  <div class="srch">
+    <span class="srch-ic">🔍</span>
+    <input class="srch-in" id="search-input" type="search" placeholder="Buscar por nome ou endereço…"
+      oninput="onSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+    <button class="srch-cl" id="search-clear" onclick="clearSearch()">✕</button>
+  </div>
+  <div class="ls" id="delivery-list"></div>
+  <button class="fab" onclick="showView('view-add')">＋</button>
+  <div class="bn">
+    <button class="nb active" id="nav-home" onclick="showView('view-home')"><span class="ni">📦</span><span class="nl">Entregas</span></button>
+    <button class="nb" id="nav-map" onclick="showView('view-map')"><span class="ni">🗺</span><span class="nl">Mapa</span></button>
+    <button class="nb" id="nav-add" onclick="showView('view-add')"><span class="ni">＋</span><span class="nl">Adicionar</span></button>
+  </div>
+</div>
+
+<!-- MAP -->
+<div class="view" id="view-map">
+  <div class="map-wrap">
+    <div id="lmap"></div>
+    <div class="map-search-bar">
+      <span class="map-search-ic">🔍</span>
+      <input class="map-search-in" id="map-search-in" type="search" placeholder="Buscar endereço… (Google Places)" autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="map-search-cl" id="map-search-cl" onclick="mapSearchClear()">✕</button>
+    </div>
+    <div class="map-ctrl top">
+      <button class="mcbtn" onclick="showView('view-home')" style="font-size:20px">←</button>
+      <button class="mcbtn" id="btn-sat" onclick="toggleLayer()">🛰</button>
+      <button class="mcbtn" onclick="fitAll()">⊞</button>
+      <button class="mcbtn" onclick="locateMe()">◎</button>
+      <button class="mcbtn" onclick="drawRealRoute()">🛣</button>
+    </div>
+    <div class="map-zoom">
+      <button class="mzbtn" onclick="map&&map.setZoom(map.getZoom()+1)">+</button>
+      <div class="mz-div"></div>
+      <button class="mzbtn" onclick="map&&map.setZoom(map.getZoom()-1)" style="font-size:28px;padding-bottom:4px">−</button>
+    </div>
+    <div class="map-routebar" id="map-routebar">
+      <span class="mrb-ic">🛣</span>
+      <div class="mrb-info">
+        <div class="mrb-dist" id="mrb-dist">—</div>
+        <div class="mrb-time" id="mrb-time">Rota por estradas reais</div>
+      </div>
+      <button class="mrb-close" onclick="clearRealRoute()">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL -->
+<div class="view" id="view-detail">
+  <div class="tb">
+    <button class="tb-back" onclick="showView('view-home')">←</button>
+    <div><div class="tb-title" id="d-name2">Entrega</div><div class="tb-sub" id="d-ord2"></div></div>
+  </div>
+  <div class="dscroll">
+    <div class="dh">
+      <div class="dav" id="d-av">AB</div>
+      <div><div class="dn" id="d-nm"></div><div class="do" id="d-st"></div></div>
+    </div>
+    <div class="dsec" style="margin-top:8px">
+      <div class="dr"><span class="drl">Endereço</span><span class="drv" id="d-addr"></span></div>
+      <div class="dr"><span class="drl">Bairro</span><span class="drv" id="d-nb"></span></div>
+      <div class="dr"><span class="drl">Telefone</span><span class="drv" id="d-ph"></span></div>
+      <div class="dr"><span class="drl">Pacote</span><span class="drv" id="d-pkg"></span></div>
+      <div class="dr"><span class="drl">Horário</span><span class="drv" id="d-time"></span></div>
+      <div class="dr" id="d-nrow" style="display:none"><span class="drl">Obs.</span><span class="drv" id="d-notes"></span></div>
+    </div>
+    <div class="das">
+      <button class="bb bbw" onclick="openWA(currentDetail)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Enviar WhatsApp
+      </button>
+      <button class="bb" onclick="openNav(currentDetail)">🧭 Abrir no Google Maps</button>
+      <button class="bb bbg" onclick="markStatus(currentDetail,'done')">✓ Marcar como entregue</button>
+      <button class="bb" onclick="markStatus(currentDetail,'current')">🚚 Em rota agora</button>
+      <button class="bb bbc" onclick="markStatus(currentDetail,'failed')">✕ Não entregue / ausente</button>
+      <button class="bb" onclick="deleteDelivery(currentDetail)" style="border-color:#D85A30;color:#D85A30;margin-top:4px">🗑 Apagar esta entrega</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD -->
+<div class="view" id="view-add">
+  <div class="tb">
+    <button class="tb-back" onclick="showView('view-home')">←</button>
+    <div><div class="tb-title">Nova Entrega</div></div>
+  </div>
+  <div class="add-sc">
+    <div class="asec">
+      <div class="asec-t">Cliente</div>
+      <div class="af"><label>Nome completo *</label><input id="n-name" type="text" placeholder="Ex: João Silva" autocomplete="name"></div>
+      <div class="af"><label>Telefone com DDD *</label><div class="ph-wrap"><span class="ph-pre">🇧🇷 +55</span><input id="n-phone" type="tel" placeholder="11 99999-9999" inputmode="tel" style="flex:1"></div></div>
+    </div>
+    <div class="asec">
+      <div class="asec-t">Endereço</div>
+      <div class="af">
+        <label>Rua e número * <span style="color:#1D9E75;font-size:10px">✦ Google Places</span></label>
+        <input id="n-addr" type="text" placeholder="Ex: Av. Sete de Setembro, 900" autocomplete="off">
+      </div>
+      <div class="af"><label>Bairro / Cidade</label><input id="n-nb" type="text" placeholder="Ex: Nova Esperança, Porto Velho"></div>
+    </div>
+    <div class="asec">
+      <div class="asec-t">Entrega</div>
+      <div class="af"><label>Nº pedido</label><input id="n-order" type="text" placeholder="#5000"></div>
+      <div class="af"><label>Tipo de pacote</label><input id="n-pkg" type="text" placeholder="1 caixa, 2 volumes..."></div>
+      <div class="af"><label>Horário</label><input id="n-time" type="time" value="14:00"></div>
+    </div>
+    <div class="asec">
+      <div class="asec-t">Observações</div>
+      <div class="af"><textarea id="n-notes" placeholder="Portaria, interfone, ligar antes..."></textarea></div>
+    </div>
+    <input type="hidden" id="n-lat">
+    <input type="hidden" id="n-lng">
+    <br>
+    <button id="btn-pick-map" class="btn-pick-map" onclick="openPicker()">📍 Tocar para marcar o local exato</button>
+    <button class="asave" onclick="saveDelivery()">Adicionar à rota</button>
+    <p class="ahint">Endereço localizado pelo Google Maps 📍</p>
+    <br>
+    <button class="asave" style="background:var(--coral);margin-top:6px" onclick="resetData()">🗑 Limpar todas as entregas</button>
+    <p class="ahint">Apaga todas as entregas cadastradas</p>
+  </div>
+</div>
+
+<!-- WA SHEET -->
+<div class="ov" id="wa-ov" onclick="closeWA(event)">
+  <div class="was" onclick="event.stopPropagation()">
+    <div class="wah"></div>
+    <div class="wah2">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      <div><div class="wah2-t">Enviar WhatsApp</div><div class="wah2-s" id="wa-sub">Para o cliente</div></div>
+    </div>
+    <div class="wab">
+      <div class="war">
+        <div class="wavar" id="wa-av">AB</div>
+        <div><div class="wan" id="wa-nm">—</div><div class="waph" id="wa-ph">—</div></div>
+      </div>
+      <div class="tl">Mensagens rápidas</div>
+      <div class="tgrid">
+        <button class="tbt sel" data-msg="Olá {nome}! Sua entrega está a caminho. Chegamos em breve! 📦" onclick="selTpl(this)">📦 A caminho</button>
+        <button class="tbt" data-msg="Olá {nome}! Passamos mas não encontramos ninguém. Entre em contato para reagendar. 🔔" onclick="selTpl(this)">🔔 Ausente</button>
+        <button class="tbt" data-msg="Olá {nome}! Sua entrega foi concluída! Obrigado! ✅" onclick="selTpl(this)">✅ Entregue</button>
+        <button class="tbt" data-msg="Olá {nome}! Estamos chegando. Pode me passar um ponto de referência? 📍" onclick="selTpl(this)">📍 Referência</button>
+      </div>
+      <textarea class="wata" id="wa-txt" placeholder="Digite sua mensagem..."></textarea>
+      <div class="wafooter">
+        <button class="wfc" onclick="closeWA()">Cancelar</button>
+        <button class="wfs" onclick="sendWA()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Abrir WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PICKER -->
+<div class="picker-ov" id="picker-ov">
+  <div class="picker-sheet">
+    <div class="picker-top">
+      <div class="picker-top-info">
+        <div class="picker-addr-lbl" id="picker-addr">Mova o mapa para selecionar</div>
+        <div class="picker-sub" id="picker-sub">Buscando endereço…</div>
+      </div>
+      <button class="mcbtn" onclick="closePicker()" style="flex-shrink:0">✕</button>
+    </div>
+    <div class="picker-map-wrap">
+      <div id="picker-map"></div>
+      <div class="picker-pin" id="picker-pin">📍</div>
+      <div class="picker-shadow" id="picker-shadow"></div>
+    </div>
+    <div class="picker-footer">
+      <button class="wfc" onclick="closePicker()">Cancelar</button>
+      <button class="wfs" onclick="confirmPicker()">✅ Confirmar local</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Google Maps callback (global, before IIFE) -->
+<script>
+window._googleMapsReady = false;
+window._pendingMapInit = false;
+window._pendingPickerInit = false;
+window.onGoogleMapsLoaded = function() {
+  window._googleMapsReady = true;
+  if (typeof window._initAddressAutocomplete === 'function') window._initAddressAutocomplete();
+  if (typeof window._initMapSearchAutocomplete === 'function') window._initMapSearchAutocomplete();
+  if (window._pendingMapInit) { window._pendingMapInit = false; if (typeof window._doInitMap === 'function') window._doInitMap(); }
+  if (window._pendingPickerInit) { window._pendingPickerInit = false; if (typeof window._doOpenPicker === 'function') window._doOpenPicker(); }
+};
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCslSzDd_I-kL1W8ktu2thwQLCzd7xNS3Y&libraries=places&callback=onGoogleMapsLoaded&loading=async" defer></script>
+
+<script>
+(function(){
+'use strict';
+
+/* ── Persistência ── */
+function saveData(){try{localStorage.setItem('rd_deliveries',JSON.stringify(deliveries));localStorage.setItem('rd_nextId',String(nextId));}catch(e){}}
+function loadData(){try{var d=localStorage.getItem('rd_deliveries'),n=localStorage.getItem('rd_nextId');if(d)return{deliveries:JSON.parse(d),nextId:n?parseInt(n):1};}catch(e){}return null;}
+var _s=loadData();
+var deliveries=_s?_s.deliveries:[];
+var nextId=_s?_s.nextId:1;
+var currentDetail=null,waTarget=null,searchQuery='';
+window.map=null;
+var markers={},routeLine=null,myMark=null,realRoute=null,searchMarker=null,infoWindow=null;
+var pickerMap=null,pickerTimer=null;
+var geocoder=null;
+var PVH_LAT=-8.7200,PVH_LNG=-63.8900;
+var mapTypeId='roadmap';
+
+var SL={done:'Entregue',current:'Em rota',pending:'Pendente',failed:'Falhou'};
+var SP={done:'pi-d',current:'pi-c',pending:'pi-p',failed:'pi-f'};
+var SS={done:'s-d',current:'s-c',pending:'s-p',failed:'s-f'};
+var MC_COLOR={done:'#1D9E75',current:'#BA7517',pending:'#888780',failed:'#D85A30'};
+function ini(n){return n.split(' ').slice(0,2).map(function(w){return w[0]?w[0].toUpperCase():'';}).join('');}
+
+/* ── Views ── */
+window.showView=function(id){
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  ['home','map','add'].forEach(function(k){var el=document.getElementById('nav-'+k);if(el)el.classList.toggle('active',id==='view-'+k);});
+  if(id==='view-home') renderList();
+  if(id==='view-map') initMap();
+};
+
+/* ── Google Maps helpers ── */
+function makeIcon(d,idx){
+  var color=MC_COLOR[d.status];
+  var fs=idx>9?'11':'13';
+  var svg='<svg width="38" height="38" xmlns="http://www.w3.org/2000/svg">'
+    +'<circle cx="19" cy="19" r="17" fill="'+color+'" stroke="white" stroke-width="2.5"/>'
+    +'<text x="19" y="24" text-anchor="middle" fill="white" font-size="'+fs+'" font-family="monospace" font-weight="700">'+idx+'</text>'
+    +'</svg>';
+  return{
+    url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),
+    scaledSize:new google.maps.Size(38,38),
+    anchor:new google.maps.Point(19,19)
+  };
+}
+
+function stPill(s){
+  var bg={done:'#E1F5EE',current:'#FAEEDA',pending:'#F1EFE8',failed:'#FAECE7'};
+  var cl={done:'#085041',current:'#633806',pending:'#2C2C2A',failed:'#4A1B0C'};
+  return 'style="background:'+bg[s]+';color:'+cl[s]+'"';
+}
+
+function popHTML(d,idx){
+  return '<div class="mpop">'
+    +'<div class="mpop-n">'+idx+'. '+d.name+'</div>'
+    +'<span class="mpop-st" '+stPill(d.status)+'>'+SL[d.status]+'</span>'
+    +'<div class="mpop-a">'+d.address+(d.neighborhood?' · '+d.neighborhood:'')+'</div>'
+    +'<div class="mpop-r">'
+    +'<button class="mpop-b mpop-nav" onclick="openNav('+d.id+')">🧭 Nav</button>'
+    +'<button class="mpop-b mpop-g" onclick="detailFromMap('+d.id+')">Detalhes</button>'
+    +'<button class="mpop-b mpop-w" onclick="openWA('+d.id+')">💬</button>'
+    +'</div></div>';
+}
+
+/* ── Init Map ── */
+function initMap(){
+  if(!window._googleMapsReady){window._pendingMapInit=true;return;}
+  window._doInitMap();
+}
+window._doInitMap=function(){
+  if(!map){
+    map=new google.maps.Map(document.getElementById('lmap'),{
+      center:{lat:PVH_LAT,lng:PVH_LNG},
+      zoom:13,
+      mapTypeId:'roadmap',
+      zoomControl:false,
+      mapTypeControl:false,
+      streetViewControl:false,
+      fullscreenControl:false,
+      gestureHandling:'greedy'
+    });
+    infoWindow=new google.maps.InfoWindow({maxWidth:260,disableAutoPan:false});
+    window.map=map;
+  }
+  setTimeout(function(){
+    google.maps.event.trigger(map,'resize');
+    drawMarkers();
+    if(!deliveries.length) centerOnGPS();
+  },150);
+};
+
+window.toggleLayer=function(){
+  if(!map) return;
+  if(mapTypeId==='roadmap'){
+    map.setMapTypeId('satellite');mapTypeId='satellite';
+    document.getElementById('btn-sat').classList.add('active-layer');
+  } else {
+    map.setMapTypeId('roadmap');mapTypeId='roadmap';
+    document.getElementById('btn-sat').classList.remove('active-layer');
+  }
+};
+
+function drawMarkers(){
+  Object.values(markers).forEach(function(m){m.setMap(null);});
+  markers={};
+  if(routeLine){routeLine.setMap(null);routeLine=null;}
+  if(!deliveries.length) return;
+  deliveries.forEach(function(d,i){
+    var mk=new google.maps.Marker({
+      position:{lat:d.lat,lng:d.lng},
+      map:map,
+      icon:makeIcon(d,i+1),
+      title:d.name,
+      zIndex:100+i
+    });
+    (function(delivery,index,marker){
+      marker.addListener('click',function(){
+        infoWindow.setContent(popHTML(delivery,index+1));
+        infoWindow.open(map,marker);
+      });
+    })(d,i,mk);
+    markers[d.id]=mk;
+  });
+  var pts=deliveries.map(function(d){return{lat:d.lat,lng:d.lng};});
+  routeLine=new google.maps.Polyline({
+    path:pts,
+    geodesic:true,
+    strokeColor:'#1D9E75',
+    strokeOpacity:0.35,
+    strokeWeight:2,
+    map:map
+  });
+  fitAll();
+}
+
+window.fitAll=function(){
+  if(!map||!deliveries.length) return;
+  var bounds=new google.maps.LatLngBounds();
+  deliveries.forEach(function(d){bounds.extend({lat:d.lat,lng:d.lng});});
+  map.fitBounds(bounds,{top:80,bottom:80,left:60,right:60});
+};
+
+function centerOnGPS(){
+  if(!navigator.geolocation||!map) return;
+  navigator.geolocation.getCurrentPosition(function(p){
+    map.setCenter({lat:p.coords.latitude,lng:p.coords.longitude});
+    map.setZoom(14);
+    placeMyLoc(p.coords.latitude,p.coords.longitude);
+  },null,{timeout:5000,maximumAge:30000});
+}
+
+function placeMyLoc(lat,lng){
+  if(myMark) myMark.setMap(null);
+  var svg='<svg width="18" height="18" xmlns="http://www.w3.org/2000/svg">'
+    +'<circle cx="9" cy="9" r="7" fill="#185FA5" stroke="white" stroke-width="2.5" opacity="0.9"/>'
+    +'</svg>';
+  myMark=new google.maps.Marker({
+    position:{lat:lat,lng:lng},
+    map:map,
+    icon:{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),scaledSize:new google.maps.Size(18,18),anchor:new google.maps.Point(9,9)},
+    title:'Você está aqui',
+    zIndex:200
+  });
+  myMark.addListener('click',function(){
+    infoWindow.setContent('<div style="padding:8px 12px;font-family:DM Sans,sans-serif;font-size:13px">📍 Você está aqui</div>');
+    infoWindow.open(map,myMark);
+  });
+}
+
+window.locateMe=function(){
+  if(!navigator.geolocation){showToast('GPS indisponível');return;}
+  showToast('Localizando…');
+  navigator.geolocation.getCurrentPosition(function(p){
+    map.setCenter({lat:p.coords.latitude,lng:p.coords.longitude});
+    map.setZoom(16);
+    placeMyLoc(p.coords.latitude,p.coords.longitude);
+  },function(){showToast('Não foi possível obter localização');},{timeout:8000,maximumAge:30000});
+};
+
+window.detailFromMap=function(id){if(infoWindow)infoWindow.close();openDetail(id);};
+
+/* ── Rota real (OSRM) ── */
+window.drawRealRoute=async function(){
+  if(!map){showToast('Abra o mapa primeiro');return;}
+  if(deliveries.length<2){showToast('Adicione pelo menos 2 entregas');return;}
+  showToast('🛣 Calculando rota…');
+  var coords=deliveries.map(function(d){return d.lng+','+d.lat;}).join(';');
+  try{
+    var r=await fetch('https://router.project-osrm.org/route/v1/driving/'+coords+'?overview=full&geometries=geojson');
+    var data=await r.json();
+    if(!data.routes||!data.routes.length){showToast('Rota não encontrada');return;}
+    var route=data.routes[0];
+    if(realRoute){realRoute.setMap(null);}
+    var path=route.geometry.coordinates.map(function(c){return{lat:c[1],lng:c[0]};});
+    realRoute=new google.maps.Polyline({
+      path:path,
+      geodesic:true,
+      strokeColor:'#4285F4',
+      strokeOpacity:0.85,
+      strokeWeight:5,
+      map:map
+    });
+    var bounds=new google.maps.LatLngBounds();
+    path.forEach(function(p){bounds.extend(p);});
+    map.fitBounds(bounds,{top:80,bottom:80,left:60,right:60});
+    var km=(route.distance/1000).toFixed(1);
+    var min=Math.round(route.duration/60);
+    var h=Math.floor(min/60),m=min%60;
+    document.getElementById('mrb-dist').textContent=km+' km · '+(h>0?h+'h '+m+'min':m+' min');
+    document.getElementById('mrb-time').textContent=deliveries.length+' paradas · rota por estradas';
+    document.getElementById('map-routebar').classList.add('show');
+  }catch(e){showToast('Erro ao calcular rota');}
+};
+
+window.clearRealRoute=function(){
+  if(realRoute){realRoute.setMap(null);realRoute=null;}
+  document.getElementById('map-routebar').classList.remove('show');
+};
+
+/* ── Busca no mapa — Google Places Autocomplete ── */
+window._initMapSearchAutocomplete=function(){
+  var inp=document.getElementById('map-search-in');
+  var ac=new google.maps.places.Autocomplete(inp,{
+    componentRestrictions:{country:'br'},
+    fields:['geometry','formatted_address','name']
+  });
+  ac.addListener('place_changed',function(){
+    var place=ac.getPlace();
+    if(!place.geometry){showToast('Local não encontrado');return;}
+    if(searchMarker) searchMarker.setMap(null);
+    searchMarker=new google.maps.Marker({
+      position:place.geometry.location,
+      map:map,
+      title:place.formatted_address||place.name,
+      animation:google.maps.Animation.DROP
+    });
+    map.setCenter(place.geometry.location);
+    map.setZoom(16);
+    document.getElementById('map-search-cl').classList.add('vis');
+  });
+  inp.addEventListener('input',function(){
+    document.getElementById('map-search-cl').classList.toggle('vis',inp.value.length>0);
+  });
+};
+
+window.mapSearchClear=function(){
+  var inp=document.getElementById('map-search-in');
+  inp.value='';
+  document.getElementById('map-search-cl').classList.remove('vis');
+  if(searchMarker){searchMarker.setMap(null);searchMarker=null;}
+  inp.focus();
+};
+
+/* ── Autocomplete endereço no formulário ADD ── */
+window._initAddressAutocomplete=function(){
+  var inp=document.getElementById('n-addr');
+  var ac=new google.maps.places.Autocomplete(inp,{
+    componentRestrictions:{country:'br'},
+    fields:['geometry','formatted_address','address_components']
+  });
+  ac.addListener('place_changed',function(){
+    var place=ac.getPlace();
+    if(!place.geometry) return;
+    var loc=place.geometry.location;
+    document.getElementById('n-lat').value=loc.lat().toFixed(7);
+    document.getElementById('n-lng').value=loc.lng().toFixed(7);
+    // Auto-fill bairro if empty
+    if(!document.getElementById('n-nb').value&&place.address_components){
+      place.address_components.forEach(function(c){
+        if(c.types.indexOf('sublocality')!==-1||c.types.indexOf('neighborhood')!==-1){
+          if(!document.getElementById('n-nb').value) document.getElementById('n-nb').value=c.long_name;
+        }
+      });
+    }
+    showToast('📍 Localizado pelo Google');
+  });
+};
+
+/* ── Geocode via Google Maps Geocoder ── */
+function getGeocoder(){if(!geocoder) geocoder=new google.maps.Geocoder();return geocoder;}
+
+async function geocode(address,nb){
+  if(window._googleMapsReady){
+    return new Promise(function(resolve){
+      getGeocoder().geocode(
+        {address:address+(nb?', '+nb:'')+', Brasil',region:'BR'},
+        function(results,status){
+          if(status==='OK'&&results.length){
+            var loc=results[0].geometry.location;
+            resolve({lat:loc.lat(),lng:loc.lng()});
+          } else {
+            nominatimFallback(address,nb,resolve);
+          }
+        }
+      );
+    });
+  } else {
+    // Fallback Nominatim se Maps ainda não carregou
+    return new Promise(function(resolve){nominatimFallback(address,nb,resolve);});
+  }
+}
+
+function nominatimFallback(address,nb,resolve){
+  var q=encodeURIComponent(address+', '+(nb||'Porto Velho')+', RO, Brasil');
+  fetch('https://nominatim.openstreetmap.org/search?q='+q+'&format=json&limit=1',{headers:{'Accept-Language':'pt-BR'}})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.length) resolve({lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)});
+      else resolve({lat:PVH_LAT+(Math.random()-.5)*.04,lng:PVH_LNG+(Math.random()-.5)*.06});
+    })
+    .catch(function(){resolve({lat:PVH_LAT+(Math.random()-.5)*.04,lng:PVH_LNG+(Math.random()-.5)*.06});});
+}
+
+/* ── Picker ── */
+window.openPicker=function(){
+  document.getElementById('picker-ov').classList.add('open');
+  if(!window._googleMapsReady){window._pendingPickerInit=true;return;}
+  window._doOpenPicker();
+};
+
+window._doOpenPicker=function(){
+  document.getElementById('picker-ov').classList.add('open');
+  if(!pickerMap){
+    pickerMap=new google.maps.Map(document.getElementById('picker-map'),{
+      center:{lat:PVH_LAT,lng:PVH_LNG},
+      zoom:14,
+      mapTypeId:'roadmap',
+      zoomControl:false,
+      mapTypeControl:false,
+      streetViewControl:false,
+      fullscreenControl:false,
+      gestureHandling:'greedy'
+    });
+    pickerMap.addListener('dragstart',function(){
+      document.getElementById('picker-pin').classList.add('dragging');
+      document.getElementById('picker-shadow').classList.add('dragging');
+    });
+    pickerMap.addListener('idle',function(){
+      document.getElementById('picker-pin').classList.remove('dragging');
+      document.getElementById('picker-shadow').classList.remove('dragging');
+      var c=pickerMap.getCenter();
+      reverseGeocode({lat:c.lat(),lng:c.lng()});
+    });
+  }
+  setTimeout(function(){
+    google.maps.event.trigger(pickerMap,'resize');
+    var lat0=parseFloat(document.getElementById('n-lat').value)||null;
+    var lng0=parseFloat(document.getElementById('n-lng').value)||null;
+    if(lat0&&lng0){
+      pickerMap.setCenter({lat:lat0,lng:lng0});
+      pickerMap.setZoom(17);
+    } else if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(
+        function(p){pickerMap.setCenter({lat:p.coords.latitude,lng:p.coords.longitude});pickerMap.setZoom(16);},
+        function(){pickerMap.setCenter({lat:PVH_LAT,lng:PVH_LNG});pickerMap.setZoom(14);},
+        {timeout:4000}
+      );
+    } else {
+      pickerMap.setCenter({lat:PVH_LAT,lng:PVH_LNG});
+      pickerMap.setZoom(14);
+    }
+    reverseGeocode({lat:pickerMap.getCenter().lat(),lng:pickerMap.getCenter().lng()});
+  },200);
+};
+
+window.closePicker=function(){document.getElementById('picker-ov').classList.remove('open');};
+
+window.confirmPicker=function(){
+  if(!pickerMap) return;
+  var c=pickerMap.getCenter();
+  document.getElementById('n-lat').value=c.lat().toFixed(7);
+  document.getElementById('n-lng').value=c.lng().toFixed(7);
+  var addr=document.getElementById('picker-addr').textContent;
+  document.getElementById('btn-pick-map').innerHTML='✅ '+addr;
+  document.getElementById('btn-pick-map').style.borderStyle='solid';
+  closePicker();
+  showToast('📍 Local marcado!');
+};
+
+function reverseGeocode(latlng){
+  clearTimeout(pickerTimer);
+  document.getElementById('picker-sub').textContent='Buscando endereço…';
+  pickerTimer=setTimeout(function(){
+    if(window._googleMapsReady){
+      getGeocoder().geocode(
+        {location:{lat:latlng.lat,lng:latlng.lng},language:'pt-BR'},
+        function(results,status){
+          if(status==='OK'&&results.length){
+            document.getElementById('picker-addr').textContent=results[0].formatted_address;
+          } else {
+            document.getElementById('picker-addr').textContent='Lat '+latlng.lat.toFixed(5)+', Lng '+latlng.lng.toFixed(5);
+          }
+          document.getElementById('picker-sub').textContent='Toque "Confirmar" para usar este local';
+        }
+      );
+    } else {
+      // Nominatim fallback
+      fetch('https://nominatim.openstreetmap.org/reverse?lat='+latlng.lat+'&lon='+latlng.lng+'&format=json',{headers:{'Accept-Language':'pt-BR'}})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          var parts=[];
+          if(d.address){var a=d.address;if(a.road)parts.push(a.road+(a.house_number?' '+a.house_number:''));if(a.suburb||a.neighbourhood)parts.push(a.suburb||a.neighbourhood);if(a.city||a.town||a.village)parts.push(a.city||a.town||a.village);}
+          document.getElementById('picker-addr').textContent=parts.length?parts.join(', '):(d.display_name||'Local selecionado');
+          document.getElementById('picker-sub').textContent='Toque "Confirmar" para usar este local';
+        }).catch(function(){
+          document.getElementById('picker-addr').textContent='Lat '+latlng.lat.toFixed(5)+', Lng '+latlng.lng.toFixed(5);
+          document.getElementById('picker-sub').textContent='Toque "Confirmar" para usar este local';
+        });
+    }
+  },600);
+}
+
+/* ── Busca (lista) ── */
+window.onSearch=function(val){searchQuery=val.trim().toLowerCase();document.getElementById('search-clear').classList.toggle('vis',searchQuery.length>0);renderList();};
+window.clearSearch=function(){searchQuery='';document.getElementById('search-input').value='';document.getElementById('search-clear').classList.remove('vis');document.getElementById('search-input').focus();renderList();};
+
+var WASVG='<svg class="wa-ic" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
+
+/* ── Render list ── */
+function hl(text,q){if(!q)return text;var idx=text.toLowerCase().indexOf(q);if(idx===-1)return text;return text.slice(0,idx)+'<mark style="background:var(--al);color:var(--ad);border-radius:3px;padding:0 1px">'+text.slice(idx,idx+q.length)+'</mark>'+text.slice(idx+q.length);}
+
+function renderList(){
+  var q=searchQuery;
+  var src=q?deliveries.filter(function(d){return d.name.toLowerCase().indexOf(q)!==-1||d.address.toLowerCase().indexOf(q)!==-1||(d.neighborhood&&d.neighborhood.toLowerCase().indexOf(q)!==-1)||d.order.toLowerCase().indexOf(q)!==-1;}):deliveries;
+  var done=src.filter(function(d){return d.status==='done';});
+  var cur=src.filter(function(d){return d.status==='current';});
+  var pend=src.filter(function(d){return d.status==='pending';});
+  var fail=src.filter(function(d){return d.status==='failed';});
+  document.getElementById('s-total').textContent=deliveries.length;
+  document.getElementById('s-done').textContent=deliveries.filter(function(d){return d.status==='done';}).length;
+  document.getElementById('s-pend').textContent=deliveries.filter(function(d){return d.status==='current'||d.status==='pending';}).length;
+  document.getElementById('s-fail').textContent=deliveries.filter(function(d){return d.status==='failed';}).length;
+  var html='';
+  if(q&&!src.length){html='<div class="srch-empty">🔍 Nenhuma entrega encontrada para<br><strong>"'+q+'"</strong></div>';}
+  else{
+    [['🚚 Em rota',cur],['⏳ Pendentes',pend],['✅ Concluídas',done],['❌ Não entregues',fail]].forEach(function(pair){
+      var lbl=pair[0],grp=pair[1];
+      if(!grp.length)return;
+      html+='<div class="sl">'+lbl+'</div>';
+      grp.forEach(function(d){
+        var idx=deliveries.indexOf(d)+1;
+        html+='<div class="dc" onclick="openDetail('+d.id+')">'
+          +'<div class="dc-m"><div class="sb '+SS[d.status]+'">'+idx+'</div>'
+          +'<div class="ci"><div class="cn">'+hl(d.name,q)+'</div>'
+          +'<div class="ca">'+hl(d.address,q)+'</div>'
+          +'<div class="cm"><span class="ot">'+d.order+'</span>'
+          +'<span class="pill '+SP[d.status]+'">'+SL[d.status]+'</span>'
+          +'<span style="font-size:10px;color:var(--tx2)">'+d.time+'</span></div></div>'
+          +'<button class="waqb" onclick="event.stopPropagation();openWA('+d.id+')">'+WASVG+'</button></div>'
+          +(d.notes?'<div class="dc-note">⚠ '+d.notes+'</div>':'')
+          +'</div>';
+      });
+    });
+  }
+  document.getElementById('delivery-list').innerHTML=html;
+}
+
+/* ── Detail ── */
+window.openDetail=function(id){
+  currentDetail=id;
+  var d=deliveries.find(function(x){return x.id===id;});
+  document.getElementById('d-name2').textContent=d.name;
+  document.getElementById('d-ord2').textContent=d.order+' · '+SL[d.status];
+  document.getElementById('d-av').textContent=ini(d.name);
+  document.getElementById('d-nm').textContent=d.name;
+  document.getElementById('d-st').textContent=SL[d.status];
+  document.getElementById('d-addr').textContent=d.address;
+  document.getElementById('d-nb').textContent=d.neighborhood||'—';
+  document.getElementById('d-ph').textContent=d.phone.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/,'($2) $3-$4');
+  document.getElementById('d-pkg').textContent=d.pkg||'—';
+  document.getElementById('d-time').textContent=d.time;
+  document.getElementById('d-nrow').style.display=d.notes?'flex':'none';
+  document.getElementById('d-notes').textContent=d.notes;
+  showView('view-detail');
+};
+
+window.openNav=function(id){
+  var d=deliveries.find(function(x){return x.id===id;});
+  if(d) window.open('https://www.google.com/maps/dir/?api=1&destination='+d.lat+','+d.lng+'&travelmode=driving','_blank');
+};
+
+window.markStatus=function(id,status){
+  var d=deliveries.find(function(x){return x.id===id;});if(!d)return;
+  d.status=status;
+  if(map&&markers[id]){var idx=deliveries.indexOf(d)+1;markers[id].setIcon(makeIcon(d,idx));}
+  saveData();
+  showToast(status==='done'?'✅ Entregue!':status==='failed'?'❌ Não entregue':'🚚 Em rota!');
+  openDetail(id);
+};
+
+window.deleteDelivery=function(id){
+  var d=deliveries.find(function(x){return x.id===id;});if(!d)return;
+  if(!confirm('Apagar entrega de '+d.name+'?'))return;
+  deliveries=deliveries.filter(function(x){return x.id!==id;});
+  if(markers[id]){markers[id].setMap(null);delete markers[id];}
+  saveData();showToast('🗑 Entrega apagada');showView('view-home');
+};
+
+/* ── WhatsApp ── */
+window.openWA=function(id){
+  waTarget=deliveries.find(function(x){return x.id===id;});
+  document.getElementById('wa-sub').textContent=waTarget.order;
+  document.getElementById('wa-av').textContent=ini(waTarget.name);
+  document.getElementById('wa-nm').textContent=waTarget.name;
+  document.getElementById('wa-ph').textContent=waTarget.phone.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/,'+$1 ($2) $3-$4');
+  var t=document.querySelector('.tbt.sel');if(t)fillTpl(t.dataset.msg);
+  document.getElementById('wa-ov').classList.add('open');
+};
+window.closeWA=function(e){if(e&&e.target!==document.getElementById('wa-ov'))return;document.getElementById('wa-ov').classList.remove('open');};
+window.selTpl=function(el){document.querySelectorAll('.tbt').forEach(function(b){b.classList.remove('sel');});el.classList.add('sel');fillTpl(el.dataset.msg);};
+function fillTpl(msg){if(!waTarget)return;document.getElementById('wa-txt').value=msg.replace('{nome}',waTarget.name.split(' ')[0]);}
+window.sendWA=function(){if(!waTarget)return;var msg=document.getElementById('wa-txt').value;window.open('https://wa.me/'+waTarget.phone+'?text='+encodeURIComponent(msg),'_blank');document.getElementById('wa-ov').classList.remove('open');showToast('Abrindo WhatsApp…');};
+
+/* ── Reset ── */
+window.resetData=function(){
+  if(!confirm('Apagar todas as entregas?'))return;
+  deliveries=[];nextId=1;saveData();
+  if(map){
+    Object.values(markers).forEach(function(m){m.setMap(null);});
+    markers={};
+    if(routeLine){routeLine.setMap(null);routeLine=null;}
+    if(realRoute){realRoute.setMap(null);realRoute=null;}
+  }
+  renderList();showView('view-home');showToast('🔄 Dados restaurados!');
+};
+
+/* ── Optimize ── */
+window.optimizeRoute=function(){
+  var ord=['current','pending','done','failed'];
+  deliveries.sort(function(a,b){return ord.indexOf(a.status)-ord.indexOf(b.status);});
+  renderList();if(map)drawMarkers();saveData();showToast('⚡ Rota otimizada!');
+};
+
+/* ── Add delivery ── */
+window.saveDelivery=async function(){
+  var name=document.getElementById('n-name').value.trim();
+  var phone=document.getElementById('n-phone').value.trim().replace(/\D/g,'');
+  if(phone.startsWith('55')&&phone.length>11) phone=phone.slice(2);
+  var address=document.getElementById('n-addr').value.trim();
+  if(!name||!phone||!address){showToast('Preencha nome, telefone e endereço');return;}
+  var nb=document.getElementById('n-nb').value.trim();
+  var pinnedLat=parseFloat(document.getElementById('n-lat').value);
+  var pinnedLng=parseFloat(document.getElementById('n-lng').value);
+  var coords;
+  if(pinnedLat&&pinnedLng){coords={lat:pinnedLat,lng:pinnedLng};}
+  else{showToast('📍 Localizando pelo Google…');coords=await geocode(address,nb);}
+  deliveries.push({
+    id:nextId++,name:name,phone:'55'+phone,address:address,neighborhood:nb,
+    order:document.getElementById('n-order').value.trim()||'#'+Math.floor(Math.random()*9000+1000),
+    pkg:document.getElementById('n-pkg').value.trim()||'—',
+    time:document.getElementById('n-time').value||'14:00',
+    notes:document.getElementById('n-notes').value.trim(),
+    status:'pending',lat:coords.lat,lng:coords.lng
+  });
+  ['n-name','n-phone','n-addr','n-nb','n-order','n-pkg','n-notes','n-lat','n-lng'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('n-time').value='14:00';
+  document.getElementById('btn-pick-map').innerHTML='📍 Tocar para marcar o local exato';
+  document.getElementById('btn-pick-map').style.borderStyle='dashed';
+  saveData();showToast('📦 Entrega adicionada!');showView('view-home');
+};
+
+/* ── Toast ── */
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
+
+/* ── Init ── */
+document.getElementById('home-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+renderList();
+
+})();
+</script>
+</body>
+</html>
